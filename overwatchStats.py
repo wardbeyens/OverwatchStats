@@ -64,7 +64,7 @@ async def changePull(*updateMessage):
         return embed
 
     players = ['wabyte-2990', 'raifiss-2515', 'Victonator-2131', 'Ardipithecus-2952',
-               'AikaNoodle-2123','Che-21446' ]
+               'AikaNoodle-2123','Che-21446']
     for name in players:
         if not os.path.exists('profiles/'):
             print('Directory not found, creating new directory')
@@ -128,7 +128,6 @@ async def on_ready():
     print(f'{bot.user.name} has connected to Discord!')
     activity = discord.Activity(name='data 👀', type=discord.ActivityType.watching)
     await bot.change_presence(activity=activity)
-    changePull.start()
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -138,7 +137,16 @@ async def on_command_error(ctx, error):
         await ctx.send("The command seems to be incomplete, try " + prefix + '``help (command)``')
 
 @bot.command(name='profile')
-async def profile(ctx, profilename, role):
+async def profile(ctx, profilename, *role):
+    print(role)
+    if len(role):
+        print(role[0])
+    nameToUser = {"ward":"wabyte-2990", "raif":"raifiss-2515", "vid":"Victonator-2131",
+               "dirk":"Ardipithecus-2952","aiki":"AikaNoodle-2123","jordi":"AikaNoodle-2123",
+                  "niels":"Che-21446","che":"Che-21446"}
+    if profilename.lower() in nameToUser:
+        profilename=nameToUser[profilename.lower()]
+
     async with aiohttp.ClientSession() as session:
         async with session.get("https://ow-api.com/v1/stats/pc/eu/" + profilename + "/complete") as r:
             if r.status == 200:
@@ -170,12 +178,11 @@ async def profile(ctx, profilename, role):
             rankIcon = data['ratings'][field]['rankIcon']
             level = data['ratings'][field]['level']
             return (name, selectedRole, roleIcon, rankIcon, level)
-
         if not avalibleRoles:
             message = "❕No competitive records found for this account❕"
             await ctx.send(message)
         else:
-            if role.lower() == '' or role.lower() == 'all':
+            if not len(role):
                 embed = discord.Embed(title=data['name'].capitalize(), colour=discord.Colour(0xfa9c1d),
                                       timestamp=datetime.datetime.utcnow())
                 embed.set_author(name='Full profile', icon_url=data['ratingIcon'])
@@ -185,30 +192,41 @@ async def profile(ctx, profilename, role):
                     embed.add_field(name=avalibleRoles[field].capitalize(),
                                     value=str(data['ratings'][field]['level']) + " SR", inline=False)
                 await ctx.send(embed=embed)
-
-            elif (role.lower() == 'tank' or role.lower() == 'defense') and 'tank' in avalibleRoles:
-                name, role, roleIcon, rankIcon, level = getData(avalibleRoles.index('tank'))
-                embed = makeEmbed(name, role, roleIcon, rankIcon, level)
-                await ctx.send(embed=embed)
-
-            elif (role.lower() == 'damage' or role.lower() == 'dps') and 'damage' in avalibleRoles:
-                name, role, roleIcon, rankIcon, level = getData(avalibleRoles.index('damage'))
-                embed = makeEmbed(name, role, roleIcon, rankIcon, level)
-                await ctx.send(embed=embed)
-
-            elif (
-                    role.lower() == 'support' or role.lower() == 'heal' or role.lower() == 'healer' or role.lower() == 'healing') and 'support' in avalibleRoles:
-                name, role, roleIcon, rankIcon, level = getData(avalibleRoles.index('support'))
-                embed = makeEmbed(name, role, roleIcon, rankIcon, level)
-                await ctx.send(embed=embed)
-
             else:
-                message = "``" + str(role) + "`` not found, try " + '``' + ', '.join(avalibleRoles) + '``'
-                await ctx.send(message)
+                if role[0].lower() == 'all':
+                    embed = discord.Embed(title=data['name'].capitalize(), colour=discord.Colour(0xfa9c1d),
+                                          timestamp=datetime.datetime.utcnow())
+                    embed.set_author(name='Full profile', icon_url=data['ratingIcon'])
+                    embed.set_thumbnail(url=data['icon'])
+                    embed.set_footer(text="Made by Vic ♥ | ow-api.com")
+                    for field in range(len(avalibleRoles)):
+                        embed.add_field(name=avalibleRoles[field].capitalize(),
+                                        value=str(data['ratings'][field]['level']) + " SR", inline=False)
+                    await ctx.send(embed=embed)
+
+                elif (role[0].lower() == 'tank' or role[0].lower() == 'defense') and 'tank' in avalibleRoles:
+                    name, role, roleIcon, rankIcon, level = getData(avalibleRoles.index('tank'))
+                    embed = makeEmbed(name, role, roleIcon, rankIcon, level)
+                    await ctx.send(embed=embed)
+
+                elif (role[0].lower() == 'damage' or role[0].lower() == 'dps') and 'damage' in avalibleRoles:
+                    name, role, roleIcon, rankIcon, level = getData(avalibleRoles.index('damage'))
+                    embed = makeEmbed(name, role, roleIcon, rankIcon, level)
+                    await ctx.send(embed=embed)
+
+                elif (role[0].lower() == 'support' or role[0].lower() == 'heal' or role[0].lower() == 'healer' or role[0].lower() == 'healing') and 'support' in avalibleRoles:
+                    name, role, roleIcon, rankIcon, level = getData(avalibleRoles.index('support'))
+                    embed = makeEmbed(name, role, roleIcon, rankIcon, level)
+                    await ctx.send(embed=embed)
+
+                else:
+                    message = "``" + str(role[0]) + "`` not found, try " + '``' + ', '.join(avalibleRoles) + '``'
+                    await ctx.send(message)
 
 @bot.command(name='update')
 async def update(ctx):
     updateMessage = await ctx.send("Updating ranks")
     changePull.restart(updateMessage)
 
+pullStatus = changePull.start()
 bot.run(TOKEN)

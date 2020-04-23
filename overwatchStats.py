@@ -138,11 +138,8 @@ async def on_command_error(ctx, error):
 
 @bot.command(name='profile')
 async def profile(ctx, profilename, *role):
-    print(role)
-    if len(role):
-        print(role[0])
     nameToUser = {"ward":"wabyte-2990", "raif":"raifiss-2515", "vid":"Victonator-2131",
-               "dirk":"Ardipithecus-2952","aiki":"AikaNoodle-2123","jordi":"AikaNoodle-2123",
+               "dirk":"Ardipithecus-2952","aika":"AikaNoodle-2123","jordy":"AikaNoodle-2123",
                   "niels":"Che-21446","che":"Che-21446"}
     if profilename.lower() in nameToUser:
         profilename=nameToUser[profilename.lower()]
@@ -227,6 +224,29 @@ async def profile(ctx, profilename, *role):
 async def update(ctx):
     updateMessage = await ctx.send("Updating ranks")
     changePull.restart(updateMessage)
+
+@bot.command(name='winky')
+async def winky(ctx):
+    if ctx.author.voice and ctx.author.voice.channel:
+        channel = ctx.author.voice.channel
+        vc = await channel.connect()
+        vc.play(discord.FFmpegPCMAudio(source="winky.ogg", executable='ffmpeg/bin/ffmpeg.exe'),
+                after=lambda e: print('winky played', e))
+        await asyncio.sleep(1)
+        await ctx.voice_client.disconnect()
+    else:
+        await ctx.send("You're not connected to a voice chat")
+
+@bot.command(name='mada')
+async def mada(ctx):
+    if ctx.author.voice and ctx.author.voice.channel:
+        channel = ctx.author.voice.channel
+        vc = await channel.connect()
+        vc.play(discord.FFmpegPCMAudio(source="mada.ogg",executable='ffmpeg/bin/ffmpeg.exe'), after=lambda e: print('mada played', e))
+        await asyncio.sleep(1)
+        await ctx.voice_client.disconnect()
+    else:
+        await ctx.send("You're not connected to a voice chat")
 
 pullStatus = changePull.start()
 bot.run(TOKEN)

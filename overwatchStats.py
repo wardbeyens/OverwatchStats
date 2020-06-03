@@ -16,10 +16,12 @@ async def changePull(*updateMessage):
     def updateJson(data, profilename):
         with open('profiles/' + profilename, 'w') as json_file:
             json.dump(data, json_file)
+            print("Updating Json")
 
     def oldJson(profilename):
         with open('profiles/' + profilename) as json_file:
             data = json.load(json_file)
+            print("Returning local data")
             return data
 
     async def getJson(profilename):
@@ -27,44 +29,51 @@ async def changePull(*updateMessage):
             async with session.get("https://ow-api.com/v1/stats/pc/eu/" + profilename + "/complete") as r:
                 if r.status == 200:
                     data = await r.json()
+        print("Returning newest data")
         return data
 
     def constructMessageDif(avalibleRoles):
+        print("Constructing message")
         def getSignDiff(new, old):
-            diff = new - old
             if old is None:
                 old = 0
             if new is None:
                 new = 0
+            diff = new - old
             if diff > 0:
                 sign = '+' + str(diff)
             else:
                 sign = str(diff)
+            print("Returning - or +")
             return sign
 
         def addField(new,old):
+            print("Adding fields")
             diff = getSignDiff(new, old)
             embed.add_field(name=avalibleRoles[avalibleRoles.index(role)].capitalize() + " previous",
                             value='```' + str(old) + " SR```", inline=True)
             embed.add_field(name='Difference', value='```diff\n' + diff + '```', inline=True)
             embed.add_field(name=avalibleRoles[avalibleRoles.index(role)].capitalize() + " current",
                             value='```' + str(new) + " SR```", inline=True)
-        embed = discord.Embed(title=currentData['name'].capitalize(), colour=discord.Colour(0xfa9c1d),
-                              timestamp=datetime.datetime.utcnow())
+
+        embed = discord.Embed(title=currentData['name'].capitalize(), colour=discord.Colour(0xfa9c1d),timestamp=datetime.datetime.utcnow())
         embed.set_author(name='Full profile', icon_url=currentData['ratingIcon'])
         embed.set_thumbnail(url=currentData['icon'])
         embed.set_footer(text="Made by Vic ♥ | ow-api.com")
         for role in avalibleRoles:
             if role == 'tank':
+                print("Adding tank")
                 addField(tankNew,tankOld)
             if role == 'damage':
+                print("Adding damage")
                 addField(damageNew, damageOld)
             if role == 'support':
+                print("Adding support")
                 addField(supportNew, supportOld)
         return embed
 
     players = ['wabyte-2990', 'raifiss-2515', 'Victonator-2131', 'Ardipithecus-2952',
-               'AikaNoodle-2123','Che-21446']
+               'AikaNoodle-2123','Che-21446','Drainnax-2919','Sharika-21250','BradleySan-21912']
     for name in players:
         if not os.path.exists('profiles/'):
             print('Directory not found, creating new directory')
@@ -83,13 +92,17 @@ async def changePull(*updateMessage):
         damageOld = None;
         supportNew = None;
         supportOld = None
+        print("Vars emptied")
 
         if not currentData['ratings'] == None:
             for field in range(len(currentData['ratings'])):
                 avalibleRolesNew.append(currentData['ratings'][field]['role'].lower())
+            print("currentData done")
         if not oldData['ratings'] == None:
             for field in range(len(oldData['ratings'])):
                 avalibleRolesOld.append(oldData['ratings'][field]['role'].lower())
+            print("oldData done")
+
 
         for role in avalibleRolesNew:
             if role == 'tank':
@@ -99,6 +112,8 @@ async def changePull(*updateMessage):
             if role == 'support':
                 supportNew = currentData['ratings'][avalibleRolesNew.index(role)]['level']
 
+        print("RolesNew Done")
+
         for role in avalibleRolesOld:
             if role == 'tank':
                 tankOld = oldData['ratings'][avalibleRolesOld.index(role)]['level']
@@ -107,13 +122,22 @@ async def changePull(*updateMessage):
             if role == 'support':
                 supportOld = oldData['ratings'][avalibleRolesOld.index(role)]['level']
 
+        print("RolesOld Done")
+
         if tankOld != tankNew or damageOld != damageNew or supportOld != supportNew:
             updateJson(currentData, name)
+            print("Profile updated!!!")
+            print(currentData,name)
+            print(avalibleRolesNew, avalibleRolesOld)
             if len(avalibleRolesNew)>=len(avalibleRolesOld):
                 embed = constructMessageDif(avalibleRolesNew)
+                print("Constructing message with new roles")
             else:
                 embed = constructMessageDif(avalibleRolesOld)
+                print("Constructing message with old roles")
             channel = bot.get_channel(id=701798038267494491)
+            print("getting id")
+            print(channel)
             await channel.send(embed=embed)
             print(name, "Updating...")
         else:
@@ -138,7 +162,7 @@ async def on_command_error(ctx, error):
 
 @bot.command(name='profile')
 async def profile(ctx, profilename, *role):
-    nameToUser = {"ward":"wabyte-2990", "raif":"raifiss-2515", "vid":"Victonator-2131",
+    nameToUser = {"ward":"wabyte-2990","wabyte":"wabyte-2990", "raif":"raifiss-2515", "vic":"Victonator-2131",
                "dirk":"Ardipithecus-2952","aika":"AikaNoodle-2123","jordy":"AikaNoodle-2123",
                   "niels":"Che-21446","che":"Che-21446"}
     if profilename.lower() in nameToUser:
@@ -220,6 +244,10 @@ async def profile(ctx, profilename, *role):
                     message = "``" + str(role[0]) + "`` not found, try " + '``' + ', '.join(avalibleRoles) + '``'
                     await ctx.send(message)
 
+@bot.command(name='hi')
+async def hi(ctx):
+    await ctx.send("yeet")
+
 @bot.command(name='update')
 async def update(ctx):
     updateMessage = await ctx.send("Updating ranks")
@@ -230,9 +258,33 @@ async def winky(ctx):
     if ctx.author.voice and ctx.author.voice.channel:
         channel = ctx.author.voice.channel
         vc = await channel.connect()
-        vc.play(discord.FFmpegPCMAudio(source="winky.ogg", executable='ffmpeg/bin/ffmpeg.exe'),
+        vc.play(discord.FFmpegPCMAudio(source="winky.ogg"),
                 after=lambda e: print('winky played', e))
         await asyncio.sleep(1)
+        await ctx.voice_client.disconnect()
+    else:
+        await ctx.send("You're not connected to a voice chat")
+
+@bot.command(name='ja')
+async def ja(ctx):
+    if ctx.author.voice and ctx.author.voice.channel:
+        channel = ctx.author.voice.channel
+        vc = await channel.connect()
+        vc.play(discord.FFmpegPCMAudio(source="ja.ogg"),
+                after=lambda e: print('ja played', e))
+        await asyncio.sleep(2)
+        await ctx.voice_client.disconnect()
+    else:
+        await ctx.send("You're not connected to a voice chat")
+
+@bot.command(name='behave')
+async def behave(ctx):
+    if ctx.author.voice and ctx.author.voice.channel:
+        channel = ctx.author.voice.channel
+        vc = await channel.connect()
+        vc.play(discord.FFmpegPCMAudio(source="behave.ogg"),
+                after=lambda e: print('behave played', e))
+        await asyncio.sleep(1.3)
         await ctx.voice_client.disconnect()
     else:
         await ctx.send("You're not connected to a voice chat")
@@ -242,11 +294,24 @@ async def mada(ctx):
     if ctx.author.voice and ctx.author.voice.channel:
         channel = ctx.author.voice.channel
         vc = await channel.connect()
-        vc.play(discord.FFmpegPCMAudio(source="mada.ogg",executable='ffmpeg/bin/ffmpeg.exe'), after=lambda e: print('mada played', e))
+        vc.play(discord.FFmpegPCMAudio(source="mada.ogg"), after=lambda e: print('mada played', e))
         await asyncio.sleep(1)
         await ctx.voice_client.disconnect()
     else:
         await ctx.send("You're not connected to a voice chat")
+
+@bot.command(name='play')
+async def play(ctx,link):
+    if ctx.author.voice and ctx.author.voice.channel:
+        channel = ctx.author.voice.channel
+        vc = await channel.connect()
+        vc.play(discord.FFmpegPCMAudio(source=link),after=lambda e: print('bot played', e))
+    else:
+        await ctx.send("You're not connected to a voice chat")
+
+@bot.command(name='dc')
+async def dc(ctx):
+    await ctx.voice_client.disconnect()
 
 pullStatus = changePull.start()
 bot.run(TOKEN)
